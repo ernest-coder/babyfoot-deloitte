@@ -16,7 +16,7 @@ import dash_bootstrap_components as dbc
 import sys
 import os
 import pytz
-
+from sqlalchemy import text
 
 
 
@@ -1182,75 +1182,80 @@ dash_app.layout = dbc.Container([
 
 def update_rating_graph(players):
     fig = go.Figure()
+    
     for player in players:
-        query = f"""SELECT
-        DISTINCT ON (DATE_TRUNC('day', m.match_timestamp))
-        DATE_TRUNC('day', m.match_timestamp) AS day_start,
-            CASE WHEN p.first_name = '{player}' THEN pr.rating ELSE NULL END AS rating
-        FROM PlayerMatch pm
-        JOIN Player p ON pm.player_id = p.player_id
-        JOIN PlayerRating pr ON pm.player_match_id = pr.player_match_id
-        JOIN Match m ON pm.match_id = m.match_id
-        WHERE p.first_name = '{player}'
-        ORDER BY DATE_TRUNC('day', m.match_timestamp) DESC, m.match_timestamp DESC
-                        """
+        query = text("""
+            SELECT DISTINCT ON (DATE_TRUNC('day', m.match_timestamp))
+                DATE_TRUNC('day', m.match_timestamp) AS day_start,
+                CASE WHEN p.first_name = :player THEN pr.rating ELSE NULL END AS rating
+            FROM PlayerMatch pm
+            JOIN Player p ON pm.player_id = p.player_id
+            JOIN PlayerRating pr ON pm.player_match_id = pr.player_match_id
+            JOIN Match m ON pm.match_id = m.match_id
+            WHERE p.first_name = :player
+            ORDER BY DATE_TRUNC('day', m.match_timestamp) DESC, m.match_timestamp DESC
+        """)
 
-        data = pd.read_sql(query, engine)
-        fig.add_trace(go.Scatter(x=data['day_start'], y=data['rating'], name=player, line=dict(shape='spline')))
+        with engine.connect() as conn:
+            result = conn.execute(query, {"player": player})
+            rows = result.fetchall()
+            day_starts = [row[0] for row in rows]
+            ratings = [row[1] for row in rows]
+
+        fig.add_trace(go.Scatter(
+            x=day_starts,
+            y=ratings,
+            name=player,
+            line=dict(shape='spline')
+        ))
+
     fig.update_xaxes(title_text='')
     fig.update_yaxes(title_text='')
-    fig.update_layout(yaxis={'categoryorder':'total ascending'})
+    fig.update_layout(yaxis={'categoryorder': 'total ascending'})
     fig.update_layout(font=fontFormat)
-    fig.update_yaxes(ticksuffix = "  ")
+    fig.update_yaxes(ticksuffix="  ")
     fig.update_layout(legend_orientation="h")
-    
-    # Set different width and height values based on screen size
+
     fig.update_layout(
-    autosize=True,
-    margin= dict(l=0, r=0, t=30, b=10),
-    paper_bgcolor="white",
-    plot_bgcolor="white",
-    dragmode='zoom',
-    uirevision='constant',
-    xaxis=dict(
-        fixedrange=False,
-        showgrid=True,  # Show the grid along the X axis
-        gridcolor='lightgray',  # Set the grid color along the X axis
-        gridwidth=0.5,  # Set the grid width along the X axis
-    ),
-    yaxis=dict(
-        fixedrange=True,
-        showgrid=True,  # Show the grid along the Y axis
-        gridcolor='lightgray',  # Set the grid color along the Y axis
-        gridwidth=0.5,  # Set the grid width along the Y axis
-    ),
-    legend=dict(
-        orientation="h",  # Set the legend orientation to horizontal
-        xanchor="center",  # Anchor the legend horizontally at the center
-        x=0.5,  # Position the legend at the center along the X axis
-        yanchor="bottom",  # Anchor the legend vertically at the bottom
-        y=-0.22,  # Position the legend slightly below the bottom along the Y axis
-    ),
-)
+        autosize=True,
+        margin=dict(l=0, r=0, t=30, b=10),
+        paper_bgcolor="white",
+        plot_bgcolor="white",
+        dragmode='zoom',
+        uirevision='constant',
+        xaxis=dict(
+            fixedrange=False,
+            showgrid=True,
+            gridcolor='lightgray',
+            gridwidth=0.5,
+        ),
+        yaxis=dict(
+            fixedrange=True,
+            showgrid=True,
+            gridcolor='lightgray',
+            gridwidth=0.5,
+        ),
+        legend=dict(
+            orientation="h",
+            xanchor="center",
+            x=0.5,
+            yanchor="bottom",
+            y=-0.22,
+        ),
+    )
 
-    
     fig.update_layout(
-    legend=dict(
-        font=dict(family='Segoe UI, Roboto, Helvetica Neue, Helvetica, Microsoft YaHei, Meiryo, Meiryo UI, Arial Unicode MS, sans-serif', size=12),
-        # other legend properties...
-    ),
-    xaxis=dict(
-        tickfont=dict(family='Segoe UI, Roboto, Helvetica Neue, Helvetica, Microsoft YaHei, Meiryo, Meiryo UI, Arial Unicode MS, sans-serif', size=12),
+        legend=dict(
+            font=dict(family='Segoe UI, Roboto, Helvetica Neue, Helvetica, Microsoft YaHei, Meiryo, Meiryo UI, Arial Unicode MS, sans-serif', size=12),
+        ),
+        xaxis=dict(
+            tickfont=dict(family='Segoe UI, Roboto, Helvetica Neue, Helvetica, Microsoft YaHei, Meiryo, Meiryo UI, Arial Unicode MS, sans-serif', size=12),
+        ),
+        yaxis=dict(
+            tickfont=dict(family='Segoe UI, Roboto, Helvetica Neue, Helvetica, Microsoft YaHei, Meiryo, Meiryo UI, Arial Unicode MS, sans-serif', size=12),
+        ),
+    )
 
-    ),
-    yaxis=dict(
-        tickfont=dict(family='Segoe UI, Roboto, Helvetica Neue, Helvetica, Microsoft YaHei, Meiryo, Meiryo UI, Arial Unicode MS, sans-serif', size=12),
-
-    ),
-    # other layout properties...
-)
-
-    
     return fig
 
 if __name__ == '__main__':
