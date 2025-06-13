@@ -1,5 +1,5 @@
 import psycopg2 
-from config import DATABASE_CONFIG
+from ..config import DATABASE_CONFIG
 
 # Connect to the database
 conn = psycopg2.connect(

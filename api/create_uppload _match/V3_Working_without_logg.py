@@ -1,6 +1,6 @@
 import psycopg2
 from openpyxl import load_workbook
-from config import DATABASE_CONFIG
+from ..config import DATABASE_CONFIG
 import math
 import logging
 

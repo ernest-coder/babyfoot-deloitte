@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import patch
-from V3_workingElo import calculate_expected_score, calculate_expected_score_route, app
+from api.V3_workingElo import calculate_expected_score, calculate_expected_score_route, app
 from flask import render_template 
 
 

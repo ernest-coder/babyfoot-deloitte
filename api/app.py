@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, abort
 import psycopg2
-from config import DATABASE_CONFIG
+from .config import DATABASE_CONFIG
 from datetime import datetime, date, timedelta
 import math
 from flask import Flask
@@ -11,7 +11,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objs as go
 from sqlalchemy import create_engine
-from config import DATABASE_CONFIG
+from .config import DATABASE_CONFIG
 import dash_bootstrap_components as dbc
 import sys
 import os
