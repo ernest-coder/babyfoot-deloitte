@@ -7,14 +7,10 @@ from flask import Flask
 import dash
 from dash import html, dcc
 from dash.dependencies import Input, Output
-import pandas as pd
-import plotly.express as px
 import plotly.graph_objs as go
 from sqlalchemy import create_engine
 from .config import DATABASE_CONFIG
 import dash_bootstrap_components as dbc
-import sys
-import os
 import pytz
 from sqlalchemy import text
 
