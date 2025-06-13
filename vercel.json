@@ -2,8 +2,9 @@
     "version": 2,
     "builds": [
       {
-        "src": "api/app.py",
-        "use": "@vercel/python"
+        "src": "setup.sh",
+        "use": "@vercel/static-build",
+        "config": { "distDir": "api" }
       }
     ],
     "routes": [
